@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CTO Calculator</title>
-    <meta name="description" content="An intelligent tool to proportionally calculate and adjust CTO project dimensions, with AI verification to ensure perfect final height.">
-    <meta name="keywords" content="CorelDRAW, graphic design, proportional calculator, CMCTO, MCTO, BMCTO, AI design tool, web app">
+    <title>CorelFlow Calculator</title>
+    <meta name="description" content="An intelligent, unified tool for graphic designers, combining a proportional scaler for CorelDRAW projects and a specialized distance calculator.">
+    <meta name="keywords" content="CorelDRAW, graphic design, proportional calculator, distance calculator, CMCTO, MCTO, BMCTO, DC-4, SC-2, AI design tool, web app">
     <meta name="author" content="Gemini">
     
     <!-- Google Fonts: Poppins -->
@@ -25,11 +25,11 @@
             --shadow-color: rgba(0, 168, 255, 0.2);
             --result-bg-color: rgba(0, 168, 255, 0.1);
             --ai-card-bg: rgba(40, 40, 70, 0.85);
+            --error-color: #ff4757;
+            --switch-off-color: #777;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        html {
-            scroll-behavior: smooth;
-        }
+        html { scroll-behavior: smooth; }
         body {
             font-family: 'Poppins', sans-serif;
             background: var(--background-color);
@@ -59,6 +59,7 @@
         }
         header p { font-size: clamp(1rem, 2.5vw, 1.1rem); color: var(--light-text-color); }
         main { width: 100%; max-width: 50rem; }
+        footer { text-align: center; margin-top: 2rem; padding: 1rem 0; color: var(--light-text-color); }
         .card {
             background: var(--container-color);
             border: 1px solid var(--border-color);
@@ -75,6 +76,7 @@
             gap: 1rem;
             margin-bottom: 2rem;
             flex-wrap: wrap;
+            align-items: center;
         }
         .radio-group label {
             cursor: pointer;
@@ -85,9 +87,7 @@
             font-size: 0.9rem;
             color: var(--light-text-color);
         }
-        .radio-group input[type="radio"] {
-            display: none;
-        }
+        .radio-group input[type="radio"] { display: none; }
         .radio-group input[type="radio"]:checked + label {
             background: var(--primary-color);
             border-color: var(--primary-color);
@@ -95,7 +95,6 @@
             font-weight: 600;
             box-shadow: 0 0 15px var(--shadow-color);
         }
-        .result-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; }
         .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
         label { display: block; font-size: 0.9rem; font-weight: 500; color: var(--light-text-color); margin-bottom: 0.5rem; }
         .input-field {
@@ -120,7 +119,35 @@
         .btn-ai { background-image: linear-gradient(45deg, #28a745, #218838); margin-top: 1rem; }
         .btn-ai:hover { box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4); }
         .btn-ai:disabled { background: #555; cursor: not-allowed; transform: none; box-shadow: none; }
+        .tabs-nav {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+            gap: 0.5rem;
+        }
+        .tab-btn {
+            padding: 12px 25px;
+            font-size: 1rem;
+            font-weight: 500;
+            background-color: transparent;
+            color: var(--light-text-color);
+            border: 2px solid var(--border-color);
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .tab-btn.active {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            color: var(--background-color);
+            font-weight: 600;
+            box-shadow: 0 0 15px var(--shadow-color);
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.5s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .results-section.hidden, .ai-card.hidden, .result-container.hidden { display: none; }
+        .result-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; }
         .result-card h2 {
             font-size: 1.5rem; font-weight: 600; margin-bottom: 1.5rem;
             padding-bottom: 0.75rem; border-bottom: 1px solid var(--border-color); color: var(--primary-color);
@@ -145,9 +172,33 @@
         .btn-copy:hover { background-color: var(--primary-color); }
         .ai-card { background: var(--ai-card-bg); }
         .ai-card .content { line-height: 1.7; color: var(--light-text-color); }
-        footer { text-align: center; margin-top: 2rem; padding: 1rem 0; color: var(--light-text-color); }
+        #distance-results-output {
+            display: flex; flex-wrap: wrap; justify-content: center;
+            gap: 15px; margin-top: 15px;
+        }
+        #distance-results-output .result-value { font-size: clamp(1rem, 4vw, 1.2rem); animation: fadeIn 0.5s ease forwards; }
+        #distance-error-message { color: var(--error-color); margin-top: 15px; font-weight: 500; height: 20px; font-size: 0.9rem; }
+        .sc2-option-container { display: flex; align-items: center; gap: 8px; }
+        .toggle-switch-container { position: relative; display: inline-block; width: 40px; height: 20px; }
+        .toggle-switch-checkbox { opacity: 0; width: 0; height: 0; }
+        .toggle-switch-label {
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: var(--switch-off-color); transition: .4s; border-radius: 20px; padding: 0; border: none;
+        }
+        .toggle-switch-label:before {
+            position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px;
+            background-color: white; transition: .4s; border-radius: 50%;
+        }
+        .toggle-switch-checkbox:checked + .toggle-switch-label { background-color: var(--primary-color); }
+        .toggle-switch-checkbox:checked + .toggle-switch-label:before { transform: translateX(20px); }
         @media (max-width: 768px) {
             .input-grid, .result-card-grid { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 540px) {
+            .radio-group label { padding: 8px 15px; font-size: 0.85rem; }
+            .toggle-switch-container { width: 36px; height: 18px; }
+            .toggle-switch-label:before { height: 14px; width: 14px; }
+            .toggle-switch-checkbox:checked + .toggle-switch-label:before { transform: translateX(18px); }
         }
     </style>
 </head>
@@ -155,530 +206,116 @@
 
     <div class="main-wrapper">
         <header>
-            <h1 id="main-title">CTO Calculator</h1>
+            <h1 id="main-title">CorelFlow Calculator</h1>
             <p>Your smart tool for accurately scaling CorelDRAW elements.</p>
         </header>
 
         <main>
-            <div class="card">
-                <div id="calculator-form">
-                    <div class="radio-group">
-                        <input type="radio" id="projectCMCTO" name="project_type" value="CMCTO" checked>
-                        <label for="projectCMCTO">CMCTO</label>
+            <div class="tabs-nav">
+                <button class="tab-btn" data-tab="scaler">Proportional Scaler</button>
+                <button class="tab-btn active" data-tab="distance">Distance Calculator</button>
+            </div>
 
-                        <input type="radio" id="projectMCTO" name="project_type" value="MCTO">
-                        <label for="projectMCTO">MCTO</label>
-
-                        <input type="radio" id="projectBMCTO" name="project_type" value="BMCTO">
-                        <label for="projectBMCTO">BMCTO</label>
+            <div id="scaler-tab" class="tab-content">
+                <div class="card">
+                    <div id="scaler-form">
+                        <div class="radio-group">
+                            <input type="radio" id="projectCMCTO" name="project_type" value="CMCTO" checked>
+                            <label for="projectCMCTO">CMCTO</label>
+                            <input type="radio" id="projectMCTO" name="project_type" value="MCTO">
+                            <label for="projectMCTO">MCTO</label>
+                            <input type="radio" id="projectBMCTO" name="project_type" value="BMCTO">
+                            <label for="projectBMCTO">BMCTO</label>
+                        </div>
+                        <div class="input-grid">
+                            <div>
+                                <label for="scaler-newWidth">Target Width (in)</label>
+                                <input type="number" id="scaler-newWidth" placeholder="e.g., 30" class="input-field">
+                            </div>
+                            <div>
+                                <label for="scaler-newHeight">Target Height (in)</label>
+                                <input type="number" id="scaler-newHeight" placeholder="e.g., 6" class="input-field">
+                            </div>
+                        </div>
+                        <div style="text-align: center;">
+                            <button id="scaler-calculateBtn" class="btn btn-primary">Calculate</button>
+                            <button id="scaler-aiCheckBtn" class="btn btn-ai hidden">AI Check & Adjust</button>
+                        </div>
                     </div>
-                    <div class="input-grid">
+                </div>
+                <div id="scaler-aiAssistantCard" class="card ai-card hidden">
+                    <h2 style="color: #28a745;">AI Assistant</h2>
+                    <div id="scaler-aiResponse" class="content"></div>
+                </div>
+                <div id="scaler-results" class="results-section hidden">
+                    <div id="cmcto-results-container" class="result-container hidden">
+                        <div class="result-card-grid">
+                            <div class="card result-card">
+                                <h2>Art Project 1 Results</h2>
+                                <div class="result-group"><h3>Text Part (T)</h3><div id="t-results"></div></div>
+                                <div class="result-group"><h3>Art Part (CM)</h3><div id="cm-results"></div></div>
+                            </div>
+                            <div class="card result-card">
+                                <h2>Art Project 2 Results</h2>
+                                <div class="result-group"><h3>Text Part (T2)</h3><div id="t2-results"></div></div>
+                                <div class="result-group"><h3>Art Part (CM2)</h3><div id="cm2-results"></div></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="mcto-results-container" class="result-container hidden">
+                         <div class="card result-card">
+                            <h2>MCTO Results</h2>
+                            <div class="result-group"><h3>Text Part (T)</h3><div id="mcto-t-results"></div></div>
+                            <div class="result-group"><h3>Art Part (M)</h3><div id="mcto-m-results"></div></div>
+                        </div>
+                    </div>
+                    <div id="bmcto-results-container" class="result-container hidden">
+                         <div class="card result-card">
+                            <h2>BMCTO Results</h2>
+                            <div class="result-group"><h3>Text Part (T)</h3><div id="bmcto-t-results"></div></div>
+                            <div class="result-group"><h3>Art Part (BM)</h3><div id="bmcto-bm-results"></div></div>
+                        </div>
+                    </div>
+                </div>
+                <div id="scaler-empty-state" style="text-align: center; color: var(--light-text-color); margin-top: 3rem;">
+                    <p>Ready to start? Select a project, input the width and height, then click Calculate.</p>
+                </div>
+            </div>
+
+            <div id="distance-tab" class="tab-content active">
+                <div class="card">
+                    <form id="distance-calculator-form" onsubmit="return false;" style="display: flex; flex-direction: column; gap: 25px;">
+                        <p style="font-size: clamp(0.9rem, 2.5vw, 1rem); color: var(--light-text-color); margin-bottom: 0; text-align: center;">Select an option before performing the calculation</p>
+                        <div class="radio-group">
+                            <input type="radio" id="tableDC4" name="table_selection" value="table1" checked>
+                            <label for="tableDC4">DC-4</label>
+                            <div class="sc2-option-container">
+                                <input type="radio" id="tableSC2" name="table_selection" value="table2">
+                                <label for="tableSC2">SC-2</label>
+                                <div class="toggle-switch-container" title="Toggle Last Input Mode">
+                                    <input type="checkbox" id="last-input-mode-toggle" class="toggle-switch-checkbox">
+                                    <label for="last-input-mode-toggle" class="toggle-switch-label"></label>
+                                </div>
+                            </div>
+                        </div>
                         <div>
-                            <label for="newWidth">Target Width (in)</label>
-                            <input type="number" id="newWidth" placeholder="e.g., 30" class="input-field">
+                            <input type="text" id="distance-inch-input" placeholder="Enter value (e.g., 1.5, 3, 4)" class="input-field" autocomplete="off">
                         </div>
-                        <div>
-                            <label for="newHeight">Target Height (in)</label>
-                            <input type="number" id="newHeight" placeholder="e.g., 6" class="input-field">
-                        </div>
-                    </div>
-                    <div style="text-align: center;">
-                        <button id="calculateBtn" class="btn btn-primary">Calculate</button>
-                        <button id="aiCheckBtn" class="btn btn-ai hidden">AI Check & Adjust</button>
-                    </div>
+                        <button type="submit" id="distance-submit-button" class="btn btn-primary">Calculate Values</button>
+                    </form>
                 </div>
-            </div>
-
-            <div id="aiAssistantCard" class="card ai-card hidden">
-                <h2 style="color: #28a745;">AI Assistant</h2>
-                <div id="aiResponse" class="content"></div>
-            </div>
-
-            <div id="results" class="results-section hidden">
-                <!-- CMCTO Results -->
-                <div id="cmcto-results-container" class="result-container hidden">
-                    <div class="result-card-grid">
-                        <div class="card result-card">
-                            <h2>Art Project 1 Results</h2>
-                            <div class="result-group"><h3>Text Part (T)</h3><div id="t-results"></div></div>
-                            <div class="result-group"><h3>Art Part (CM)</h3><div id="cm-results"></div></div>
-                        </div>
-                        <div class="card result-card">
-                            <h2>Art Project 2 Results</h2>
-                            <div class="result-group"><h3>Text Part (T2)</h3><div id="t2-results"></div></div>
-                            <div class="result-group"><h3>Art Part (CM2)</h3><div id="cm2-results"></div></div>
-                        </div>
-                    </div>
+                <div id="distance-results" style="text-align: center; margin-top: 2rem;">
+                    <h2 id="distance-results-title" style="display:none; color: var(--primary-color); font-size: 1.2rem; margin-bottom: 15px;">Calculated Distance:</h2>
+                    <div id="distance-error-message" style="color: var(--error-color); font-weight: 500; height: 20px; font-size: 0.9rem;"></div>
+                    <div id="distance-results-output" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; margin-top: 15px;"></div>
                 </div>
-                <!-- MCTO Results -->
-                <div id="mcto-results-container" class="result-container hidden">
-                     <div class="card result-card">
-                        <h2>MCTO Results</h2>
-                        <div class="result-group"><h3>Text Part (T)</h3><div id="mcto-t-results"></div></div>
-                        <div class="result-group"><h3>Art Part (M)</h3><div id="mcto-m-results"></div></div>
-                    </div>
-                </div>
-                <!-- BMCTO Results -->
-                <div id="bmcto-results-container" class="result-container hidden">
-                     <div class="card result-card">
-                        <h2>BMCTO Results</h2>
-                        <div class="result-group"><h3>Text Part (T)</h3><div id="bmcto-t-results"></div></div>
-                        <div class="result-group"><h3>Art Part (BM)</h3><div id="bmcto-bm-results"></div></div>
-                    </div>
-                </div>
-            </div>
-            
-            <div id="empty-state" style="text-align: center; color: var(--light-text-color); margin-top: 3rem;">
-                <p>Ready to start? Select a project, input the width and height, then click Calculate.</p>
             </div>
         </main>
 
-        <footer><p>&copy; <span id="year"></span> CTO Calculator. All rights reserved.</p></footer>
+        <footer><p>&copy; <span id="year"></span> Aurtho.com. All rights reserved.</p></footer>
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            // --- DOM Elements ---
-            const mainTitle = document.getElementById('main-title');
-            const newHeightInput = document.getElementById('newHeight');
-            const newWidthInput = document.getElementById('newWidth');
-            const calculateBtn = document.getElementById('calculateBtn');
-            const aiCheckBtn = document.getElementById('aiCheckBtn');
-            const resultsSection = document.getElementById('results');
-            const emptyState = document.getElementById('empty-state');
-            const aiAssistantCard = document.getElementById('aiAssistantCard');
-            const aiResponseEl = document.getElementById('aiResponse');
-            const projectRadios = document.querySelectorAll('input[name="project_type"]');
-            
-            const resultContainers = {
-                CMCTO: document.getElementById('cmcto-results-container'),
-                MCTO: document.getElementById('mcto-results-container'),
-                BMCTO: document.getElementById('bmcto-results-container')
-            };
-
-            document.getElementById('year').textContent = new Date().getFullYear();
-            newWidthInput.focus(); // Auto-focus on width input on page load
-
-            let calculatedValues = {}; // Generic storage for any project type
-
-            // --- Project-specific Data ---
-            const projectData = {
-                CMCTO: {
-                    original: { height: 5, width: 23 },
-                    art1: {
-                        cm: { size: { h: 3.58, w: 23 }, pos: { x: 4.25, y: 8.34 } },
-                        t:  { size: { h: 1.7, w: 22.25 }, pos: { x: 3.88, y: 5.98 } },
-                    },
-                    art2: {
-                        cm2: { size: { h: 3.541, w: 23 }, pos: { x: 3.89, y: 7.88 } },
-                        t2:  { size: { h: 1.7, w: 22.25 }, pos: { x: 4.25, y: 5.5 } },
-                    }
-                }
-            };
-            
-            // --- Core Functions ---
-            function getSelectedProjectType() {
-                return document.querySelector('input[name="project_type"]:checked').value;
-            }
-
-            function resetApp() {
-                newWidthInput.value = '';
-                newHeightInput.value = '';
-                resultsSection.classList.add('hidden');
-                aiAssistantCard.classList.add('hidden');
-                aiCheckBtn.classList.add('hidden');
-                emptyState.style.display = 'block';
-                document.getElementById('projectCMCTO').checked = true;
-                newWidthInput.focus();
-            }
-
-            function calculateAndDisplay() {
-                const projectType = getSelectedProjectType();
-                
-                Object.values(resultContainers).forEach(c => c.classList.add('hidden'));
-                aiAssistantCard.classList.add('hidden');
-                
-                let calculationSuccessful = false;
-                if (projectType === 'CMCTO') {
-                    calculationSuccessful = calculateCMCTO();
-                } else if (projectType === 'MCTO') {
-                    calculationSuccessful = calculateMCTO();
-                } else if (projectType === 'BMCTO') {
-                    calculationSuccessful = calculateBMCTO();
-                }
-
-                if (calculationSuccessful) {
-                    aiCheckBtn.classList.remove('hidden');
-                } else {
-                    aiCheckBtn.classList.add('hidden');
-                }
-            }
-            
-            // --- Calculation Logic ---
-            function calculateCMCTO() {
-                const newHeight = parseFloat(newHeightInput.value);
-                const newWidth = parseFloat(newWidthInput.value);
-
-                if (isNaN(newHeight) || isNaN(newWidth) || newHeight <= 0 || newWidth <= 0) {
-                    alert('Please enter valid, positive numbers for height and width.');
-                    return false;
-                }
-
-                const data = projectData.CMCTO;
-                const heightScaleFactor = newHeight / data.original.height;
-                const widthScaleFactor = newWidth / data.original.width;
-
-                const newCMSize = { h: data.art1.cm.size.h * heightScaleFactor, w: data.art1.cm.size.w * widthScaleFactor };
-                const newCMPos = { x: data.art1.cm.pos.x * widthScaleFactor, y: data.art1.cm.pos.y * heightScaleFactor };
-                const newTSize = { h: data.art1.t.size.h * heightScaleFactor, w: data.art1.t.size.w * widthScaleFactor };
-                const newTPos = { x: data.art1.t.pos.x * widthScaleFactor, y: data.art1.t.pos.y * heightScaleFactor };
-
-                let newCM2Size, newCM2Pos;
-                if (newHeight === 6 && newWidth === 30) {
-                    newCM2Size = { h: 4.248, w: 30 };
-                    newCM2Pos = { x: 5.075, y: 9.456 };
-                } else {
-                    newCM2Size = { h: data.art2.cm2.size.h * heightScaleFactor, w: data.art2.cm2.size.w * widthScaleFactor };
-                    newCM2Pos = { x: data.art2.cm2.pos.x * widthScaleFactor, y: data.art2.cm2.pos.y * heightScaleFactor };
-                }
-                const newT2Size = { h: data.art2.t2.size.h * heightScaleFactor, w: data.art2.t2.size.w * widthScaleFactor };
-                const newT2Pos = { x: data.art2.t2.pos.x * widthScaleFactor, y: data.art2.t2.pos.y * heightScaleFactor };
-
-                calculatedValues = {
-                    projectType: 'CMCTO',
-                    targetHeight: newHeight,
-                    art2: {
-                        cm2: { size: newCM2Size, pos: newCM2Pos },
-                        t2: { size: newT2Size, pos: newT2Pos }
-                    }
-                };
-
-                displayElementResults('t-results', newTSize, newTPos);
-                displayElementResults('cm-results', newCMSize, newCMPos);
-                displayElementResults('t2-results', newT2Size, newT2Pos);
-                displayElementResults('cm2-results', newCM2Size, newCM2Pos);
-                
-                resultContainers.CMCTO.classList.remove('hidden');
-                resultsSection.classList.remove('hidden');
-                emptyState.style.display = 'none';
-                
-                resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                return true;
-            }
-
-            function calculateMCTO() {
-                const newHeight = parseFloat(newHeightInput.value);
-                const newWidth = parseFloat(newWidthInput.value);
-
-                if (isNaN(newHeight) || isNaN(newWidth) || newHeight <= 0 || newWidth <= 0) {
-                    alert('Please enter valid, positive numbers for height and width.');
-                    return false;
-                }
-
-                const tSizeH = 0.2 * newHeight + 0.8;
-                const mSizeH = 0.8 * newHeight - 0.9;
-                const mPosY = 0.5 * newHeight + 5.55;
-
-                const tSize = { w: newWidth, h: tSizeH };
-                const tPos = { x: 4.25, y: 5.5 };
-                const mSize = { w: newWidth, h: mSizeH };
-                const mPos = { x: 4.25, y: mPosY };
-                
-                calculatedValues = {
-                    projectType: 'MCTO',
-                    targetHeight: newHeight,
-                    textPart: { size: tSize, pos: tPos },
-                    artPart: { size: mSize, pos: mPos }
-                };
-
-                displayElementResults('mcto-t-results', tSize, tPos);
-                displayElementResults('mcto-m-results', mSize, mPos);
-
-                resultContainers.MCTO.classList.remove('hidden');
-                resultsSection.classList.remove('hidden');
-                emptyState.style.display = 'none';
-                
-                resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                return true;
-            }
-
-            function calculateBMCTO() {
-                const newHeight = parseFloat(newHeightInput.value);
-                const newWidth = parseFloat(newWidthInput.value);
-
-                if (isNaN(newHeight) || isNaN(newWidth) || newHeight <= 0 || newWidth <= 0) {
-                    alert('Please enter valid, positive numbers for height and width.');
-                    return false;
-                }
-
-                const tSizeH = 0.22 * newHeight + 0.42;
-                const bmSizeH = 0.76 * newHeight - 0.44;
-                const bmPosY = 0.51 * newHeight + 5.51;
-
-                const tSize = { w: newWidth, h: tSizeH };
-                const tPos = { x: 4.25, y: 5.5 };
-                const bmSize = { w: newWidth, h: bmSizeH };
-                const bmPos = { x: 4.25, y: bmPosY };
-                
-                calculatedValues = {
-                    projectType: 'BMCTO',
-                    targetHeight: newHeight,
-                    textPart: { size: tSize, pos: tPos },
-                    artPart: { size: bmSize, pos: bmPos }
-                };
-
-                displayElementResults('bmcto-t-results', tSize, tPos);
-                displayElementResults('bmcto-bm-results', bmSize, bmPos);
-
-                resultContainers.BMCTO.classList.remove('hidden');
-                resultsSection.classList.remove('hidden');
-                emptyState.style.display = 'none';
-                
-                resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                return true;
-            }
-            
-            function displayElementResults(containerId, sizeData, posData) {
-                const container = document.getElementById(containerId);
-                container.innerHTML = `
-                    <h4>Size</h4>
-                    ${createResultRow('Width', sizeData.w.toFixed(4))}
-                    ${createResultRow('Height', sizeData.h.toFixed(4))}
-                    <h4>Position</h4>
-                    ${createResultRow('X', posData.x.toFixed(4))}
-                    ${createResultRow('Y', posData.y.toFixed(4))}
-                `;
-            }
-
-            function createResultRow(label, value) {
-                return `
-                    <div class="result-row">
-                        <span>${label}:</span>
-                        <div class="result-value-wrapper">
-                            <span class="result-value">${value}″</span>
-                            <button class="btn-copy" onclick="copyToClipboard(this)">Copy</button>
-                        </div>
-                    </div>
-                `;
-            }
-
-            // --- AI Assistant ---
-            async function performAICheck() {
-                aiCheckBtn.disabled = true;
-                aiCheckBtn.textContent = 'AI is thinking...';
-                aiAssistantCard.classList.remove('hidden');
-                aiResponseEl.innerHTML = '<p>Analyzing dimensions... Please wait.</p>';
-
-                const projectType = calculatedValues.projectType;
-                if (!projectType) {
-                    aiResponseEl.innerHTML = `<p style="color: #ff4757;"><strong>Error:</strong> Please click 'Calculate' first.</p>`;
-                    aiCheckBtn.disabled = false;
-                    aiCheckBtn.textContent = 'AI Check & Adjust';
-                    return;
-                }
-                
-                let prompt = '';
-                let schema = {};
-
-                if (projectType === 'CMCTO') {
-                    const { targetHeight, art2 } = calculatedValues;
-                    prompt = `
-                        You are a CorelDRAW calculation expert. Your task is to analyze dimensions for "Art Project 2" of a CMCTO project and return a JSON object.
-                        The user wants the total combined height of all elements in this project to be exactly ${targetHeight} inches.
-                        The coordinate system has Y=0 at the bottom. The total design height is the highest point (max Y) minus the lowest point (min Y-Height).
-                        Current elements:
-                        - Art Part (CM2): Height=${art2.cm2.size.h.toFixed(4)}, Y-Position=${art2.cm2.pos.y.toFixed(4)}
-                        - Text Part (T2): Height=${art2.t2.size.h.toFixed(4)}, Y-Position=${art2.t2.pos.y.toFixed(4)}
-                        The user has manually adjusted CM2, so its values must not be changed. You can only suggest adjustments for T2's Y-Position or Height. The X-Position must not be changed.
-                        Analyze the current total height. If it's correct, set "is_adjustment_needed" to false. If it's incorrect, set "is_adjustment_needed" to true and provide the corrected values for T2.
-                        Return ONLY a valid JSON object.
-                    `;
-                    schema = {
-                        type: "OBJECT",
-                        properties: {
-                            "is_adjustment_needed": { "type": "BOOLEAN" },
-                            "explanation": { "type": "STRING" },
-                            "corrected_t2": {
-                                "type": "OBJECT",
-                                "properties": {
-                                    "size": { "type": "OBJECT", "properties": { "h": { "type": "NUMBER" }, "w": { "type": "NUMBER" } } },
-                                    "pos": { "type": "OBJECT", "properties": { "x": { "type": "NUMBER" }, "y": { "type": "NUMBER" } } }
-                                }
-                            }
-                        }
-                    };
-                } else if (projectType === 'MCTO') {
-                    const { targetHeight, textPart, artPart } = calculatedValues;
-                    prompt = `
-                        You are a CorelDRAW calculation expert. Your task is to analyze dimensions for an MCTO project and return a JSON object.
-                        The user wants the total combined height of all elements to be exactly ${targetHeight} inches.
-                        The total design height is the highest point (max Y) minus the lowest point (min Y-Height).
-                        Current elements:
-                        - Text Part (T): Height=${textPart.size.h.toFixed(4)}, Y-Position=${textPart.pos.y.toFixed(4)}
-                        - Art Part (M): Height=${artPart.size.h.toFixed(4)}, Y-Position=${artPart.pos.y.toFixed(4)}
-                        The Text Part (T) has fixed positions and its height is derived from a formula, so its values must not be changed. You can only suggest adjustments for the Art Part (M)'s Y-Position or Height. The X-Position must not be changed.
-                        Analyze the current total height. If it's incorrect, set "is_adjustment_needed" to true and provide the corrected values for the Art Part (M). If it's correct, set "is_adjustment_needed" to false.
-                        Return ONLY a valid JSON object.
-                    `;
-                    schema = {
-                        type: "OBJECT",
-                        properties: {
-                            "is_adjustment_needed": { "type": "BOOLEAN" },
-                            "explanation": { "type": "STRING" },
-                            "corrected_m": {
-                                "type": "OBJECT",
-                                "properties": {
-                                    "size": { "type": "OBJECT", "properties": { "h": { "type": "NUMBER" }, "w": { "type": "NUMBER" } } },
-                                    "pos": { "type": "OBJECT", "properties": { "x": { "type": "NUMBER" }, "y": { "type": "NUMBER" } } }
-                                }
-                            }
-                        }
-                    };
-                } else if (projectType === 'BMCTO') {
-                    const { targetHeight, textPart, artPart } = calculatedValues;
-                    prompt = `
-                        You are a CorelDRAW calculation expert. Your task is to analyze dimensions for a BMCTO project and return a JSON object.
-                        The user wants the total combined height of all elements to be exactly ${targetHeight} inches.
-                        The total design height is the highest point (max Y) minus the lowest point (min Y-Height).
-                        Current elements:
-                        - Text Part (T): Height=${textPart.size.h.toFixed(4)}, Y-Position=${textPart.pos.y.toFixed(4)}
-                        - Art Part (BM): Height=${artPart.size.h.toFixed(4)}, Y-Position=${artPart.pos.y.toFixed(4)}
-                        The Text Part (T) has fixed positions and its height is derived from a formula, so its values must not be changed. You can only suggest adjustments for the Art Part (BM)'s Y-Position or Height. The X-Position must not be changed.
-                        Analyze the current total height. If it's incorrect, set "is_adjustment_needed" to true and provide the corrected values for the Art Part (BM). If it's correct, set "is_adjustment_needed" to false.
-                        Return ONLY a valid JSON object.
-                    `;
-                    schema = {
-                        type: "OBJECT",
-                        properties: {
-                            "is_adjustment_needed": { "type": "BOOLEAN" },
-                            "explanation": { "type": "STRING" },
-                            "corrected_bm": {
-                                "type": "OBJECT",
-                                "properties": {
-                                    "size": { "type": "OBJECT", "properties": { "h": { "type": "NUMBER" }, "w": { "type": "NUMBER" } } },
-                                    "pos": { "type": "OBJECT", "properties": { "x": { "type": "NUMBER" }, "y": { "type": "NUMBER" } } }
-                                }
-                            }
-                        }
-                    };
-                }
-                
-                const apiKey = "AIzaSyCtVl9wyefRnkjxBTiRSIeGIMEzjTbyiFY";
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
-
-                const payload = {
-                    contents: [{ parts: [{ text: prompt }] }],
-                    generationConfig: {
-                        responseMimeType: "application/json",
-                        responseSchema: schema
-                    }
-                };
-
-                try {
-                    const response = await fetch(apiUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-
-                    if (!response.ok) {
-                        const errorBody = await response.text();
-                        throw new Error(`API request failed with status ${response.status}. Body: ${errorBody}`);
-                    }
-
-                    const result = await response.json();
-                    
-                    if (!result.candidates || !result.candidates[0].content.parts[0].text) {
-                        throw new Error("Invalid response structure from AI API.");
-                    }
-                    
-                    const jsonString = result.candidates[0].content.parts[0].text;
-                    const aiData = JSON.parse(jsonString);
-
-                    let html = '';
-                    if (aiData.is_adjustment_needed) {
-                        let correctedData = null;
-                        let partName = '';
-                        if (projectType === 'CMCTO' && aiData.corrected_t2) {
-                             correctedData = aiData.corrected_t2;
-                             partName = 'Text Part (T2)';
-                        } else if (projectType === 'MCTO' && aiData.corrected_m) {
-                             correctedData = aiData.corrected_m;
-                             partName = 'Art Part (M)';
-                        } else if (projectType === 'BMCTO' && aiData.corrected_bm) {
-                             correctedData = aiData.corrected_bm;
-                             partName = 'Art Part (BM)';
-                        }
-
-                        if (correctedData) {
-                            html += `<h3 style="color: var(--primary-color); margin-bottom: 0.5rem;">Corrected ${partName} Values:</h3>`;
-                            html += `<div class="result-group" style="background: none; padding: 0;">`;
-                            html += displayElementResultsHTML(correctedData.size, correctedData.pos);
-                            html += `</div>`;
-                        } else {
-                            html = `<p>${aiData.explanation || "An adjustment is needed, but the AI did not provide specific values."}</p>`;
-                        }
-                    } else {
-                        html = `<p>${aiData.explanation || "The dimensions are correct. No adjustment needed."}</p>`;
-                    }
-                    aiResponseEl.innerHTML = html;
-                    
-                    aiAssistantCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-                } catch (error) {
-                    console.error("AI Check Error:", error);
-                    aiResponseEl.innerHTML = `<p style="color: #ff4757;"><strong>Error:</strong> Could not get a valid response from the AI assistant. Please try again. Check the console for details.</p>`;
-                } finally {
-                    aiCheckBtn.disabled = false;
-                    aiCheckBtn.textContent = 'AI Check & Adjust';
-                }
-            }
-            
-            function displayElementResultsHTML(sizeData, posData) {
-                return `
-                    <h4>Size</h4>
-                    ${createResultRow('Width', sizeData.w.toFixed(4))}
-                    ${createResultRow('Height', sizeData.h.toFixed(4))}
-                    <h4>Position</h4>
-                    ${createResultRow('X', posData.x.toFixed(4))}
-                    ${createResultRow('Y', posData.y.toFixed(4))}
-                `;
-            }
-
-            // --- Event Listeners ---
-            mainTitle.addEventListener('click', resetApp);
-            calculateBtn.addEventListener('click', calculateAndDisplay);
-            aiCheckBtn.addEventListener('click', performAICheck);
-
-            newWidthInput.addEventListener('keydown', (e) => {
-                if (e.key === 'ArrowRight') { e.preventDefault(); newHeightInput.focus(); }
-                if (e.key === 'Enter') { e.preventDefault(); calculateAndDisplay(); }
-            });
-
-            newHeightInput.addEventListener('keydown', (e) => {
-                if (e.key === 'ArrowLeft') { e.preventDefault(); newWidthInput.focus(); }
-                if (e.key === 'Enter') { e.preventDefault(); calculateAndDisplay(); }
-            });
-            
-            document.body.addEventListener('keydown', (e) => {
-                if (e.key === 'Backspace' && e.target.tagName !== 'INPUT') {
-                    resetApp();
-                }
-            });
-            
-            projectRadios.forEach(radio => {
-                radio.addEventListener('change', () => {
-                   resultsSection.classList.add('hidden');
-                   aiAssistantCard.classList.add('hidden');
-                   aiCheckBtn.classList.add('hidden');
-                   emptyState.style.display = 'block';
-                   newWidthInput.value = '';
-                   newHeightInput.value = '';
-                   newWidthInput.focus();
-                });
-            });
-        });
-
         function copyToClipboard(button) {
             const valueElement = button.previousElementSibling;
             const textToCopy = valueElement.textContent.replace('″', '');
@@ -693,7 +330,353 @@
             } catch (err) { console.error('Failed to copy text: ', err); }
             document.body.removeChild(textArea);
         }
-    </script>
 
+        document.addEventListener('DOMContentLoaded', function () {
+            const mainTitle = document.getElementById('main-title');
+            
+            const scalerReset = setupScalerCalculator();
+            const distanceReset = setupDistanceCalculator();
+
+            mainTitle.addEventListener('click', () => {
+                scalerReset();
+                distanceReset();
+                document.querySelector('.tab-btn[data-tab="scaler"]').click();
+            });
+            document.body.addEventListener('keydown', (e) => {
+                if (e.key === 'Backspace' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+                    const activeTab = document.querySelector('.tab-content.active').id;
+                    if (activeTab === 'scaler-tab') {
+                        scalerReset();
+                    } else if (activeTab === 'distance-tab') {
+                        distanceReset();
+                    }
+                }
+            });
+
+            const tabButtons = document.querySelectorAll('.tab-btn');
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    const targetTab = button.getAttribute('data-tab');
+                    tabContents.forEach(content => {
+                        content.classList.toggle('active', content.id === `${targetTab}-tab`);
+                    });
+                    if (targetTab === 'scaler') document.getElementById('scaler-newWidth').focus();
+                    if (targetTab === 'distance') document.getElementById('distance-inch-input').focus();
+                });
+            });
+            
+            document.querySelector('.tab-btn[data-tab="distance"]').click();
+        });
+
+        function setupScalerCalculator() {
+            const newHeightInput = document.getElementById('scaler-newHeight');
+            const newWidthInput = document.getElementById('scaler-newWidth');
+            const calculateBtn = document.getElementById('scaler-calculateBtn');
+            const aiCheckBtn = document.getElementById('scaler-aiCheckBtn');
+            const resultsSection = document.getElementById('scaler-results');
+            const emptyState = document.getElementById('scaler-empty-state');
+            const aiAssistantCard = document.getElementById('scaler-aiAssistantCard');
+            const aiResponseEl = document.getElementById('scaler-aiResponse');
+            const projectRadios = document.querySelectorAll('input[name="project_type"]');
+            
+            const resultContainers = {
+                CMCTO: document.getElementById('cmcto-results-container'),
+                MCTO: document.getElementById('mcto-results-container'),
+                BMCTO: document.getElementById('bmcto-results-container')
+            };
+
+            let calculatedValues = {};
+
+            const projectData = {
+                CMCTO: {
+                    original: { height: 5, width: 23 },
+                    art1: {
+                        cm: { size: { h: 3.58, w: 23 }, pos: { x: 4.25, y: 8.34 } },
+                        t:  { size: { h: 1.7, w: 22.25 }, pos: { x: 3.88, y: 5.98 } },
+                    },
+                    art2: {
+                        cm2: { size: { h: 3.541, w: 23 }, pos: { x: 3.89, y: 7.88 } },
+                        t2:  { size: { h: 1.7, w: 22.25 }, pos: { x: 4.25, y: 5.5 } },
+                    }
+                }
+            };
+            
+            function getSelectedProjectType() { return document.querySelector('input[name="project_type"]:checked').value; }
+
+            function resetScaler() {
+                newWidthInput.value = '';
+                newHeightInput.value = '';
+                resultsSection.classList.add('hidden');
+                aiAssistantCard.classList.add('hidden');
+                aiCheckBtn.classList.add('hidden');
+                emptyState.style.display = 'block';
+                document.getElementById('projectCMCTO').checked = true;
+                if (document.querySelector('.tab-content.active')?.id === 'scaler-tab') newWidthInput.focus();
+            }
+
+            function calculateAndDisplay() {
+                const projectType = getSelectedProjectType();
+                Object.values(resultContainers).forEach(c => c.classList.add('hidden'));
+                aiAssistantCard.classList.add('hidden');
+                
+                let calculationSuccessful = false;
+                if (projectType === 'CMCTO') calculationSuccessful = calculateCMCTO();
+                else if (projectType === 'MCTO') calculationSuccessful = calculateMCTO();
+                else if (projectType === 'BMCTO') calculationSuccessful = calculateBMCTO();
+
+                aiCheckBtn.classList.toggle('hidden', !calculationSuccessful);
+            }
+            
+            function calculateCMCTO() {
+                const newHeight = parseFloat(newHeightInput.value);
+                const newWidth = parseFloat(newWidthInput.value);
+                if (isNaN(newHeight) || isNaN(newWidth) || newHeight <= 0 || newWidth <= 0) { alert('Please enter valid, positive numbers.'); return false; }
+
+                const data = projectData.CMCTO;
+                const hf = newHeight / data.original.height, wf = newWidth / data.original.width;
+                const t1s = { h: data.art1.t.size.h * hf, w: data.art1.t.size.w * wf }, t1p = { x: data.art1.t.pos.x * wf, y: data.art1.t.pos.y * hf };
+                const cm1s = { h: data.art1.cm.size.h * hf, w: data.art1.cm.size.w * wf }, cm1p = { x: data.art1.cm.pos.x * wf, y: data.art1.cm.pos.y * hf };
+                let cm2s, cm2p;
+                if (newHeight === 6 && newWidth === 30) {
+                    cm2s = { h: 4.248, w: 30 }; cm2p = { x: 5.075, y: 9.456 };
+                } else {
+                    cm2s = { h: data.art2.cm2.size.h * hf, w: data.art2.cm2.size.w * wf }; cm2p = { x: data.art2.cm2.pos.x * wf, y: data.art2.cm2.pos.y * hf };
+                }
+                const t2s = { h: data.art2.t2.size.h * hf, w: data.art2.t2.size.w * wf }, t2p = { x: data.art2.t2.pos.x * wf, y: data.art2.t2.pos.y * hf };
+                
+                calculatedValues = { projectType: 'CMCTO', targetHeight: newHeight, art2: { cm2: { size: cm2s, pos: cm2p }, t2: { size: t2s, pos: t2p } } };
+                displayElementResults('t-results', t1s, t1p);
+                displayElementResults('cm-results', cm1s, cm1p);
+                displayElementResults('t2-results', t2s, t2p);
+                displayElementResults('cm2-results', cm2s, cm2p);
+                
+                resultContainers.CMCTO.classList.remove('hidden');
+                resultsSection.classList.remove('hidden');
+                emptyState.style.display = 'none';
+                resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                return true;
+            }
+
+            function calculateMCTO() {
+                const newH = parseFloat(newHeightInput.value), newW = parseFloat(newWidthInput.value);
+                if (isNaN(newH) || isNaN(newW) || newH <= 0 || newW <= 0) { alert('Please enter valid, positive numbers.'); return false; }
+                const ts = { w: newW, h: 0.2 * newH + 0.8 }, tp = { x: 4.25, y: 5.5 };
+                const ms = { w: newW, h: 0.8 * newH - 0.9 }, mp = { x: 4.25, y: 0.5 * newH + 5.55 };
+                calculatedValues = { projectType: 'MCTO', targetHeight: newH, textPart: { size: ts, pos: tp }, artPart: { size: ms, pos: mp } };
+                displayElementResults('mcto-t-results', ts, tp);
+                displayElementResults('mcto-m-results', ms, mp);
+                resultContainers.MCTO.classList.remove('hidden');
+                resultsSection.classList.remove('hidden');
+                emptyState.style.display = 'none';
+                resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                return true;
+            }
+
+            function calculateBMCTO() {
+                const newH = parseFloat(newHeightInput.value), newW = parseFloat(newWidthInput.value);
+                if (isNaN(newH) || isNaN(newW) || newH <= 0 || newW <= 0) { alert('Please enter valid, positive numbers.'); return false; }
+                const ts = { w: newW, h: 0.22 * newH + 0.42 }, tp = { x: 4.25, y: 5.5 };
+                const bms = { w: newW, h: 0.76 * newH - 0.44 }, bmp = { x: 4.25, y: 0.51 * newH + 5.51 };
+                calculatedValues = { projectType: 'BMCTO', targetHeight: newH, textPart: { size: ts, pos: tp }, artPart: { size: bms, pos: bmp } };
+                displayElementResults('bmcto-t-results', ts, tp);
+                displayElementResults('bmcto-bm-results', bms, bmp);
+                resultContainers.BMCTO.classList.remove('hidden');
+                resultsSection.classList.remove('hidden');
+                emptyState.style.display = 'none';
+                resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                return true;
+            }
+            
+            function displayElementResults(containerId, sizeData, posData) {
+                const container = document.getElementById(containerId);
+                container.innerHTML = `<h4>Size</h4>${createResultRow('Width', sizeData.w.toFixed(4))}${createResultRow('Height', sizeData.h.toFixed(4))}<h4>Position</h4>${createResultRow('X', posData.x.toFixed(4))}${createResultRow('Y', posData.y.toFixed(4))}`;
+            }
+
+            function createResultRow(label, value) { return `<div class="result-row"><span>${label}:</span><div class="result-value-wrapper"><span class="result-value">${value}″</span><button class="btn-copy" onclick="copyToClipboard(this)">Copy</button></div></div>`; }
+
+            async function performAICheck() {
+                aiCheckBtn.disabled = true;
+                aiCheckBtn.textContent = 'AI is thinking...';
+                aiAssistantCard.classList.remove('hidden');
+                aiResponseEl.innerHTML = '<p>Analyzing dimensions... Please wait.</p>';
+
+                const projectType = calculatedValues.projectType;
+                if (!projectType) {
+                    aiResponseEl.innerHTML = `<p style="color: var(--error-color);"><strong>Error:</strong> Please click 'Calculate' first.</p>`;
+                    aiCheckBtn.disabled = false;
+                    aiCheckBtn.textContent = 'AI Check & Adjust';
+                    return;
+                }
+                
+                let prompt = '', schema = {};
+                if (projectType === 'CMCTO') {
+                    const { targetHeight, art2 } = calculatedValues;
+                    prompt = `You are a CorelDRAW calculation expert. Your task is to analyze dimensions for "Art Project 2" of a CMCTO project and return a JSON object. The user wants the total combined height of all elements in this project to be exactly ${targetHeight} inches. The coordinate system has Y=0 at the bottom. The total design height is the highest point (max Y) minus the lowest point (min Y-Height). Current elements: - Art Part (CM2): Height=${art2.cm2.size.h.toFixed(4)}, Y-Position=${art2.cm2.pos.y.toFixed(4)} - Text Part (T2): Height=${art2.t2.size.h.toFixed(4)}, Y-Position=${art2.t2.pos.y.toFixed(4)}. The user has manually adjusted CM2, so its values must not be changed. You can only suggest adjustments for T2's Y-Position or Height. The X-Position must not be changed. Analyze the current total height. If it's correct, set "is_adjustment_needed" to false. If it's incorrect, set "is_adjustment_needed" to true and provide the corrected values for T2. Return ONLY a valid JSON object.`;
+                    schema = { type: "OBJECT", properties: { "is_adjustment_needed": { "type": "BOOLEAN" }, "explanation": { "type": "STRING" }, "corrected_t2": { "type": "OBJECT", "properties": { "size": { "type": "OBJECT", "properties": { "h": { "type": "NUMBER" }, "w": { "type": "NUMBER" } } }, "pos": { "type": "OBJECT", "properties": { "x": { "type": "NUMBER" }, "y": { "type": "NUMBER" } } } } } } };
+                } else if (projectType === 'MCTO') {
+                    const { targetHeight, textPart, artPart } = calculatedValues;
+                    prompt = `You are a CorelDRAW calculation expert. Your task is to analyze dimensions for an MCTO project and return a JSON object. The user wants the total combined height of all elements to be exactly ${targetHeight} inches. The total design height is the highest point (max Y) minus the lowest point (min Y-Height). Current elements: - Text Part (T): Height=${textPart.size.h.toFixed(4)}, Y-Position=${textPart.pos.y.toFixed(4)} - Art Part (M): Height=${artPart.size.h.toFixed(4)}, Y-Position=${artPart.pos.y.toFixed(4)}. The Text Part (T) has fixed positions and its height is derived from a formula, so its values must not be changed. You can only suggest adjustments for the Art Part (M)'s Y-Position or Height. The X-Position must not be changed. Analyze the current total height. If it's incorrect, set "is_adjustment_needed" to true and provide the corrected values for the Art Part (M). If it's correct, set "is_adjustment_needed" to false. Return ONLY a valid JSON object.`;
+                    schema = { type: "OBJECT", properties: { "is_adjustment_needed": { "type": "BOOLEAN" }, "explanation": { "type": "STRING" }, "corrected_m": { "type": "OBJECT", "properties": { "size": { "type": "OBJECT", "properties": { "h": { "type": "NUMBER" }, "w": { "type": "NUMBER" } } }, "pos": { "type": "OBJECT", "properties": { "x": { "type": "NUMBER" }, "y": { "type": "NUMBER" } } } } } } };
+                } else if (projectType === 'BMCTO') {
+                    const { targetHeight, textPart, artPart } = calculatedValues;
+                    prompt = `You are a CorelDRAW calculation expert. Your task is to analyze dimensions for a BMCTO project and return a JSON object. The user wants the total combined height of all elements to be exactly ${targetHeight} inches. The total design height is the highest point (max Y) minus the lowest point (min Y-Height). Current elements: - Text Part (T): Height=${textPart.size.h.toFixed(4)}, Y-Position=${textPart.pos.y.toFixed(4)} - Art Part (BM): Height=${artPart.size.h.toFixed(4)}, Y-Position=${artPart.pos.y.toFixed(4)}. The Text Part (T) has fixed positions and its height is derived from a formula, so its values must not be changed. You can only suggest adjustments for the Art Part (BM)'s Y-Position or Height. The X-Position must not be changed. Analyze the current total height. If it's incorrect, set "is_adjustment_needed" to true and provide the corrected values for the Art Part (BM). If it's correct, set "is_adjustment_needed" to false. Return ONLY a valid JSON object.`;
+                    schema = { type: "OBJECT", properties: { "is_adjustment_needed": { "type": "BOOLEAN" }, "explanation": { "type": "STRING" }, "corrected_bm": { "type": "OBJECT", "properties": { "size": { "type": "OBJECT", "properties": { "h": { "type": "NUMBER" }, "w": { "type": "NUMBER" } } }, "pos": { "type": "OBJECT", "properties": { "x": { "type": "NUMBER" }, "y": { "type": "NUMBER" } } } } } } };
+                }
+                
+                const apiKey = "AIzaSyCtVl9wyefRnkjxBTiRSIeGIMEzjTbyiFY";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
+                const payload = { contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseMimeType: "application/json", responseSchema: schema } };
+
+                try {
+                    const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                    if (!response.ok) throw new Error(`API request failed with status ${response.status}`);
+                    const result = await response.json();
+                    if (!result.candidates?.[0]?.content?.parts?.[0]?.text) throw new Error("Invalid response structure from AI API.");
+                    
+                    const aiData = JSON.parse(result.candidates[0].content.parts[0].text);
+                    let html = '';
+                    if (aiData.is_adjustment_needed) {
+                        const correctedData = aiData.corrected_t2 || aiData.corrected_m || aiData.corrected_bm;
+                        const partName = aiData.corrected_t2 ? 'Text Part (T2)' : (aiData.corrected_m ? 'Art Part (M)' : 'Art Part (BM)');
+                        if (correctedData) {
+                            html = `<h3 style="color: var(--primary-color); margin-bottom: 0.5rem;">Corrected ${partName} Values:</h3><div class="result-group" style="background: none; padding: 0;">${displayElementResultsHTML(correctedData.size, correctedData.pos)}</div>`;
+                        } else {
+                            html = `<p>${aiData.explanation || "An adjustment is needed, but the AI did not provide specific values."}</p>`;
+                        }
+                    } else {
+                        html = `<p>${aiData.explanation || "The dimensions are correct. No adjustment needed."}</p>`;
+                    }
+                    aiResponseEl.innerHTML = html;
+                    aiAssistantCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                } catch (error) {
+                    console.error("AI Check Error:", error);
+                    aiResponseEl.innerHTML = `<p style="color: var(--error-color);"><strong>Error:</strong> Could not get a valid response from the AI assistant. Please try again.</p>`;
+                } finally {
+                    aiCheckBtn.disabled = false;
+                    aiCheckBtn.textContent = 'AI Check & Adjust';
+                }
+            }
+            
+            function displayElementResultsHTML(sizeData, posData) {
+                return `<h4>Size</h4>${createResultRow('Width', sizeData.w.toFixed(4))}${createResultRow('Height', sizeData.h.toFixed(4))}<h4>Position</h4>${createResultRow('X', posData.x.toFixed(4))}${createResultRow('Y', posData.y.toFixed(4))}`;
+            }
+
+            calculateBtn.addEventListener('click', calculateAndDisplay);
+            aiCheckBtn.addEventListener('click', performAICheck);
+            newWidthInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); calculateAndDisplay(); }});
+            newHeightInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); calculateAndDisplay(); }});
+            projectRadios.forEach(radio => radio.addEventListener('change', () => {
+                resultsSection.classList.add('hidden');
+                aiAssistantCard.classList.add('hidden');
+                aiCheckBtn.classList.add('hidden');
+                emptyState.style.display = 'block';
+                newWidthInput.value = '';
+                newHeightInput.value = '';
+                newWidthInput.focus();
+            }));
+            
+            return resetScaler;
+        }
+
+        function setupDistanceCalculator() {
+            const inchInput = document.getElementById('distance-inch-input');
+            const resultsOutput = document.getElementById('distance-results-output');
+            const resultsTitle = document.getElementById('distance-results-title');
+            const errorMessage = document.getElementById('distance-error-message');
+            const radioDC4 = document.getElementById('tableDC4');
+            const radioSC2 = document.getElementById('tableSC2');
+            const lastInputModeToggle = document.getElementById('last-input-mode-toggle');
+            const submitButton = document.getElementById('distance-submit-button');
+
+            let isLastInputMode = false;
+            let activeCalcString = "";
+
+            function resetDistance() {
+                inchInput.value = '';
+                resultsOutput.innerHTML = '';
+                errorMessage.textContent = '';
+                resultsTitle.style.display = 'none';
+                radioDC4.checked = true;
+                lastInputModeToggle.checked = false;
+                isLastInputMode = false;
+                activeCalcString = "";
+                if (document.querySelector('.tab-content.active')?.id === 'distance-tab') inchInput.focus();
+            }
+
+            function calculateAndDisplayDistance() {
+                resultsOutput.innerHTML = '';
+                const selectedTableRadio = document.querySelector('input[name="table_selection"]:checked');
+                let inchValueStringForCalc = isLastInputMode ? activeCalcString : inchInput.value;
+
+                if (!selectedTableRadio || inchValueStringForCalc.trim() === '') {
+                    resultsTitle.style.display = 'none';
+                    errorMessage.textContent = '';
+                    return;
+                }
+
+                const inchValue = parseFloat(inchValueStringForCalc);
+                if (isNaN(inchValue)) {
+                    errorMessage.textContent = 'Error: Invalid number.';
+                    resultsTitle.style.display = 'none';
+                    return;
+                }
+                
+                errorMessage.textContent = '';
+                const i = inchValue > 2 ? inchValue : (2 * inchValue - 2);
+                const calculations = {
+                    t1_r1: (index) => 1.5 * index + 10,
+                    t1_r2_t2_r1: (index) => 0.5 * index + 7,
+                    t1_r3_t2_r2: (index) => -0.5 * index + 4,
+                    t1_r4: (index) => -1.5 * index + 1,
+                };
+
+                let outputValues = [];
+                if (selectedTableRadio.value === 'table1') {
+                    outputValues.push(calculations.t1_r1(i), calculations.t1_r2_t2_r1(i), calculations.t1_r3_t2_r2(i), calculations.t1_r4(i));
+                } else {
+                    outputValues.push(calculations.t1_r2_t2_r1(i), calculations.t1_r3_t2_r2(i));
+                }
+
+                if (outputValues.length > 0) {
+                    resultsTitle.style.display = 'block';
+                    outputValues.forEach((value, index) => {
+                        const resultElement = document.createElement('div');
+                        resultElement.className = 'result-value';
+                        resultElement.textContent = Number.isInteger(value) ? value : parseFloat(value.toFixed(4));
+                        resultElement.style.animationDelay = `${index * 0.1}s`;
+                        resultsOutput.appendChild(resultElement);
+                    });
+                }
+            }
+
+            submitButton.addEventListener('click', () => { calculateAndDisplayDistance(); inchInput.focus(); });
+            inchInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); calculateAndDisplayDistance(); }});
+            lastInputModeToggle.addEventListener('change', function() {
+                isLastInputMode = this.checked;
+                activeCalcString = "";
+                if (!isLastInputMode) { inchInput.value = ''; }
+                calculateAndDisplayDistance();
+                inchInput.focus();
+            });
+
+            inchInput.addEventListener('input', () => {
+                if (isLastInputMode) {
+                    const lastChar = inchInput.value.slice(-1);
+                    if (lastChar >= '0' && lastChar <= '9') { activeCalcString = lastChar; } 
+                    else { activeCalcString = ""; }
+                }
+                calculateAndDisplayDistance();
+            });
+            
+            [radioDC4, radioSC2].forEach(radio => radio.addEventListener('change', () => {
+                if (radio.checked) { calculateAndDisplayDistance(); inchInput.focus(); }
+            }));
+
+            return resetDistance;
+        }
+    </script>
 </body>
 </html>
