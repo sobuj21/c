@@ -6,7 +6,7 @@
     <title>CorelFlow Calculator</title>
     <meta name="description" content="An intelligent, unified tool for graphic designers, combining a proportional scaler for CorelDRAW projects and a specialized distance calculator.">
     <meta name="keywords" content="CorelDRAW, graphic design, proportional calculator, distance calculator, CMCTO, MCTO, BMCTO, DC-4, SC-2, AI design tool, web app">
-    <meta name="author" content="Aurtho">
+    <meta name="author" content="Gemini">
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='grad1' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%2300a8ff' /%3E%3Cstop offset='100%25' style='stop-color:%239c88ff' /%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M 71.2,28.8 A 30,30 0 1,0 71.2,71.2' stroke='url(%23grad1)' stroke-width='14' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
     
     <!-- Google Fonts: Poppins -->
@@ -147,7 +147,7 @@
         .tab-content { display: none; }
         .tab-content.active { display: block; animation: fadeIn 0.5s ease; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .results-section.hidden, .ai-card.hidden, .result-container.hidden { display: none; }
+        .results-section.hidden, .ai-card.hidden, .result-container.hidden, .hidden { display: none; }
         .result-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; }
         .result-card h2 {
             font-size: 1.5rem; font-weight: 600; margin-bottom: 1.5rem;
@@ -246,6 +246,20 @@
                 </div>
                 <div id="scaler-aiAssistantCard" class="card ai-card hidden">
                     <h2 style="color: #28a745;">AI Assistant</h2>
+                    <div id="scaler-ai-input-section" class="hidden" style="margin-bottom: 1.5rem;">
+                        <p style="margin-bottom: 1rem; color: var(--light-text-color);">Enter the actual dimensions from CorelDRAW for a more precise adjustment.</p>
+                        <div class="input-grid">
+                            <div>
+                                <label for="scaler-actualWidth">Actual Width in CorelDRAW</label>
+                                <input type="number" id="scaler-actualWidth" placeholder="e.g., 24.98" class="input-field">
+                            </div>
+                            <div>
+                                <label for="scaler-actualHeight">Actual Height in CorelDRAW</label>
+                                <input type="number" id="scaler-actualHeight" placeholder="e.g., 4.98" class="input-field">
+                            </div>
+                        </div>
+                         <button id="scaler-runAiBtn" class="btn btn-ai" style="margin-top: 0;">Run AI Adjustment</button>
+                    </div>
                     <div id="scaler-aiResponse" class="content"></div>
                 </div>
                 <div id="scaler-results" class="results-section hidden">
@@ -381,6 +395,10 @@
             const emptyState = document.getElementById('scaler-empty-state');
             const aiAssistantCard = document.getElementById('scaler-aiAssistantCard');
             const aiResponseEl = document.getElementById('scaler-aiResponse');
+            const aiInputSection = document.getElementById('scaler-ai-input-section');
+            const actualWidthInput = document.getElementById('scaler-actualWidth');
+            const actualHeightInput = document.getElementById('scaler-actualHeight');
+            const runAiBtn = document.getElementById('scaler-runAiBtn');
             const projectRadios = document.querySelectorAll('input[name="project_type"]');
             
             const resultContainers = {
@@ -448,7 +466,7 @@
                 }
                 const t2s = { h: data.art2.t2.size.h * hf, w: data.art2.t2.size.w * wf }, t2p = { x: data.art2.t2.pos.x * wf, y: data.art2.t2.pos.y * hf };
                 
-                calculatedValues = { projectType: 'CMCTO', targetHeight: newHeight, art2: { cm2: { size: cm2s, pos: cm2p }, t2: { size: t2s, pos: t2p } } };
+                calculatedValues = { projectType: 'CMCTO', targetHeight: newHeight, targetWidth: newWidth, art1: { t: {size: t1s, pos: t1p}, cm: {size: cm1s, pos: cm1p}}, art2: { cm2: { size: cm2s, pos: cm2p }, t2: { size: t2s, pos: t2p } } };
                 displayElementResults('t-results', t1s, t1p);
                 displayElementResults('cm-results', cm1s, cm1p);
                 displayElementResults('t2-results', t2s, t2p);
@@ -466,7 +484,7 @@
                 if (isNaN(newH) || isNaN(newW) || newH <= 0 || newW <= 0) { alert('Please enter valid, positive numbers.'); return false; }
                 const ts = { w: newW, h: 0.2 * newH + 0.8 }, tp = { x: 4.25, y: 5.5 };
                 const ms = { w: newW, h: 0.8 * newH - 0.9 }, mp = { x: 4.25, y: 0.5 * newH + 5.55 };
-                calculatedValues = { projectType: 'MCTO', targetHeight: newH, textPart: { size: ts, pos: tp }, artPart: { size: ms, pos: mp } };
+                calculatedValues = { projectType: 'MCTO', targetHeight: newH, targetWidth: newW, textPart: { size: ts, pos: tp }, artPart: { size: ms, pos: mp } };
                 displayElementResults('mcto-t-results', ts, tp);
                 displayElementResults('mcto-m-results', ms, mp);
                 resultContainers.MCTO.classList.remove('hidden');
@@ -481,7 +499,7 @@
                 if (isNaN(newH) || isNaN(newW) || newH <= 0 || newW <= 0) { alert('Please enter valid, positive numbers.'); return false; }
                 const ts = { w: newW, h: 0.22 * newH + 0.42 }, tp = { x: 4.25, y: 5.5 };
                 const bms = { w: newW, h: 0.76 * newH - 0.44 }, bmp = { x: 4.25, y: 0.51 * newH + 5.51 };
-                calculatedValues = { projectType: 'BMCTO', targetHeight: newH, textPart: { size: ts, pos: tp }, artPart: { size: bms, pos: bmp } };
+                calculatedValues = { projectType: 'BMCTO', targetHeight: newH, targetWidth: newW, textPart: { size: ts, pos: tp }, artPart: { size: bms, pos: bmp } };
                 displayElementResults('bmcto-t-results', ts, tp);
                 displayElementResults('bmcto-bm-results', bms, bmp);
                 resultContainers.BMCTO.classList.remove('hidden');
@@ -499,31 +517,33 @@
             function createResultRow(label, value) { return `<div class="result-row"><span>${label}:</span><div class="result-value-wrapper"><span class="result-value">${value}″</span><button class="btn-copy" onclick="copyToClipboard(this)">Copy</button></div></div>`; }
 
             async function performAICheck() {
-                aiCheckBtn.disabled = true;
-                aiCheckBtn.textContent = 'AI is thinking...';
-                aiAssistantCard.classList.remove('hidden');
+                runAiBtn.disabled = true;
+                runAiBtn.textContent = 'AI is thinking...';
                 aiResponseEl.innerHTML = '<p>Analyzing dimensions... Please wait.</p>';
 
                 const projectType = calculatedValues.projectType;
                 if (!projectType) {
                     aiResponseEl.innerHTML = `<p style="color: var(--error-color);"><strong>Error:</strong> Please click 'Calculate' first.</p>`;
-                    aiCheckBtn.disabled = false;
-                    aiCheckBtn.textContent = 'AI Check & Adjust';
+                    runAiBtn.disabled = false;
+                    runAiBtn.textContent = 'Run AI Adjustment';
                     return;
                 }
                 
+                const actualWidth = parseFloat(actualWidthInput.value) || calculatedValues.targetWidth;
+                const actualHeight = parseFloat(actualHeightInput.value) || calculatedValues.targetHeight;
+                
                 let prompt = '', schema = {};
                 if (projectType === 'CMCTO') {
-                    const { targetHeight, art2 } = calculatedValues;
-                    prompt = `You are a CorelDRAW calculation expert. Your task is to analyze dimensions for "Art Project 2" of a CMCTO project and return a JSON object. The user wants the total combined height of all elements in this project to be exactly ${targetHeight} inches. The coordinate system has Y=0 at the bottom. The total design height is the highest point (max Y) minus the lowest point (min Y-Height). Current elements: - Art Part (CM2): Height=${art2.cm2.size.h.toFixed(4)}, Y-Position=${art2.cm2.pos.y.toFixed(4)} - Text Part (T2): Height=${art2.t2.size.h.toFixed(4)}, Y-Position=${art2.t2.pos.y.toFixed(4)}. The user has manually adjusted CM2, so its values must not be changed. You can only suggest adjustments for T2's Y-Position or Height. The X-Position must not be changed. Analyze the current total height. If it's correct, set "is_adjustment_needed" to false. If it's incorrect, set "is_adjustment_needed" to true and provide the corrected values for T2. Return ONLY a valid JSON object.`;
+                    const { targetHeight, targetWidth, art2 } = calculatedValues;
+                    prompt = `You are a CorelDRAW calculation expert. Your task is to analyze dimensions for "Art Project 2" of a CMCTO project and return a JSON object. The user's target dimensions are ${targetWidth}" W x ${targetHeight}" H. The user reports the actual total bounding box in their software is ${actualWidth}" W x ${actualHeight}" H. The coordinate system has Y=0 at the bottom. The total design height is the highest point (max Y) minus the lowest point (min Y-Height). Current elements: - Art Part (CM2): Height=${art2.cm2.size.h.toFixed(4)}, Y-Position=${art2.cm2.pos.y.toFixed(4)} - Text Part (T2): Height=${art2.t2.size.h.toFixed(4)}, Y-Position=${art2.t2.pos.y.toFixed(4)}. The user has manually adjusted CM2, so its values must not be changed. You can only suggest adjustments for T2's Y-Position or Height to meet the target height. The X-Position must not be changed. Analyze the current total height. If it's incorrect, set "is_adjustment_needed" to true and provide the corrected values for T2. If correct, set "is_adjustment_needed" to false. Return ONLY a valid JSON object.`;
                     schema = { type: "OBJECT", properties: { "is_adjustment_needed": { "type": "BOOLEAN" }, "explanation": { "type": "STRING" }, "corrected_t2": { "type": "OBJECT", "properties": { "size": { "type": "OBJECT", "properties": { "h": { "type": "NUMBER" }, "w": { "type": "NUMBER" } } }, "pos": { "type": "OBJECT", "properties": { "x": { "type": "NUMBER" }, "y": { "type": "NUMBER" } } } } } } };
                 } else if (projectType === 'MCTO') {
-                    const { targetHeight, textPart, artPart } = calculatedValues;
-                    prompt = `You are a CorelDRAW calculation expert. Your task is to analyze dimensions for an MCTO project and return a JSON object. The user wants the total combined height of all elements to be exactly ${targetHeight} inches. The total design height is the highest point (max Y) minus the lowest point (min Y-Height). Current elements: - Text Part (T): Height=${textPart.size.h.toFixed(4)}, Y-Position=${textPart.pos.y.toFixed(4)} - Art Part (M): Height=${artPart.size.h.toFixed(4)}, Y-Position=${artPart.pos.y.toFixed(4)}. The Text Part (T) has fixed positions and its height is derived from a formula, so its values must not be changed. You can only suggest adjustments for the Art Part (M)'s Y-Position or Height. The X-Position must not be changed. Analyze the current total height. If it's incorrect, set "is_adjustment_needed" to true and provide the corrected values for the Art Part (M). If it's correct, set "is_adjustment_needed" to false. Return ONLY a valid JSON object.`;
+                    const { targetHeight, targetWidth, textPart, artPart } = calculatedValues;
+                    prompt = `You are a CorelDRAW calculation expert. Your task is to analyze dimensions for an MCTO project and return a JSON object. The user's target dimensions are ${targetWidth}" W x ${targetHeight}" H. The user reports the actual total bounding box in their software is ${actualWidth}" W x ${actualHeight}" H. The total design height is the highest point (max Y) minus the lowest point (min Y-Height). Current elements: - Text Part (T): Height=${textPart.size.h.toFixed(4)}, Y-Position=${textPart.pos.y.toFixed(4)} - Art Part (M): Height=${artPart.size.h.toFixed(4)}, Y-Position=${artPart.pos.y.toFixed(4)}. The Text Part (T) has fixed positions and its height is derived from a formula, so its values must not be changed. You can only suggest adjustments for the Art Part (M)'s Y-Position or Height. The X-Position must not be changed. Analyze the current total height. If it's incorrect, set "is_adjustment_needed" to true and provide the corrected values for the Art Part (M). If it's correct, set "is_adjustment_needed" to false. Return ONLY a valid JSON object.`;
                     schema = { type: "OBJECT", properties: { "is_adjustment_needed": { "type": "BOOLEAN" }, "explanation": { "type": "STRING" }, "corrected_m": { "type": "OBJECT", "properties": { "size": { "type": "OBJECT", "properties": { "h": { "type": "NUMBER" }, "w": { "type": "NUMBER" } } }, "pos": { "type": "OBJECT", "properties": { "x": { "type": "NUMBER" }, "y": { "type": "NUMBER" } } } } } } };
                 } else if (projectType === 'BMCTO') {
-                    const { targetHeight, textPart, artPart } = calculatedValues;
-                    prompt = `You are a CorelDRAW calculation expert. Your task is to analyze dimensions for a BMCTO project and return a JSON object. The user wants the total combined height of all elements to be exactly ${targetHeight} inches. The total design height is the highest point (max Y) minus the lowest point (min Y-Height). Current elements: - Text Part (T): Height=${textPart.size.h.toFixed(4)}, Y-Position=${textPart.pos.y.toFixed(4)} - Art Part (BM): Height=${artPart.size.h.toFixed(4)}, Y-Position=${artPart.pos.y.toFixed(4)}. The Text Part (T) has fixed positions and its height is derived from a formula, so its values must not be changed. You can only suggest adjustments for the Art Part (BM)'s Y-Position or Height. The X-Position must not be changed. Analyze the current total height. If it's incorrect, set "is_adjustment_needed" to true and provide the corrected values for the Art Part (BM). If it's correct, set "is_adjustment_needed" to false. Return ONLY a valid JSON object.`;
+                    const { targetHeight, targetWidth, textPart, artPart } = calculatedValues;
+                    prompt = `You are a CorelDRAW calculation expert. Your task is to analyze dimensions for a BMCTO project and return a JSON object. The user's target dimensions are ${targetWidth}" W x ${targetHeight}" H. The user reports the actual total bounding box in their software is ${actualWidth}" W x ${actualHeight}" H. The total design height is the highest point (max Y) minus the lowest point (min Y-Height). Current elements: - Text Part (T): Height=${textPart.size.h.toFixed(4)}, Y-Position=${textPart.pos.y.toFixed(4)} - Art Part (BM): Height=${artPart.size.h.toFixed(4)}, Y-Position=${artPart.pos.y.toFixed(4)}. The Text Part (T) has fixed positions and its height is derived from a formula, so its values must not be changed. You can only suggest adjustments for the Art Part (BM)'s Y-Position or Height. The X-Position must not be changed. Analyze the current total height. If it's incorrect, set "is_adjustment_needed" to true and provide the corrected values for the Art Part (BM). If it's correct, set "is_adjustment_needed" to false. Return ONLY a valid JSON object.`;
                     schema = { type: "OBJECT", properties: { "is_adjustment_needed": { "type": "BOOLEAN" }, "explanation": { "type": "STRING" }, "corrected_bm": { "type": "OBJECT", "properties": { "size": { "type": "OBJECT", "properties": { "h": { "type": "NUMBER" }, "w": { "type": "NUMBER" } } }, "pos": { "type": "OBJECT", "properties": { "x": { "type": "NUMBER" }, "y": { "type": "NUMBER" } } } } } } };
                 }
                 
@@ -556,8 +576,8 @@
                     console.error("AI Check Error:", error);
                     aiResponseEl.innerHTML = `<p style="color: var(--error-color);"><strong>Error:</strong> Could not get a valid response from the AI assistant. Please try again.</p>`;
                 } finally {
-                    aiCheckBtn.disabled = false;
-                    aiCheckBtn.textContent = 'AI Check & Adjust';
+                    runAiBtn.disabled = false;
+                    runAiBtn.textContent = 'Run AI Adjustment';
                 }
             }
             
@@ -566,7 +586,16 @@
             }
 
             calculateBtn.addEventListener('click', calculateAndDisplay);
-            aiCheckBtn.addEventListener('click', performAICheck);
+            aiCheckBtn.addEventListener('click', () => {
+                aiAssistantCard.classList.remove('hidden');
+                aiInputSection.classList.remove('hidden');
+                aiResponseEl.innerHTML = ''; // Clear previous responses
+                actualWidthInput.value = newWidthInput.value;
+                actualHeightInput.value = newHeightInput.value;
+                aiAssistantCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+            runAiBtn.addEventListener('click', performAICheck);
+
             newWidthInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); calculateAndDisplay(); }});
             newHeightInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); calculateAndDisplay(); }});
             projectRadios.forEach(radio => radio.addEventListener('change', () => {
@@ -594,7 +623,6 @@
             const resultsContainer = document.getElementById('distance-results');
 
             let isLastInputMode = false;
-            let activeCalcString = "";
 
             function resetDistance() {
                 inchInput.value = '';
@@ -604,14 +632,18 @@
                 radioDC4.checked = true;
                 lastInputModeToggle.checked = false;
                 isLastInputMode = false;
-                activeCalcString = "";
                 if (document.querySelector('.tab-content.active')?.id === 'distance-tab') inchInput.focus();
             }
 
             function calculateAndDisplayDistance(shouldScroll = false) {
                 resultsOutput.innerHTML = '';
                 const selectedTableRadio = document.querySelector('input[name="table_selection"]:checked');
-                let inchValueStringForCalc = isLastInputMode ? activeCalcString : inchInput.value;
+                let inchValueStringForCalc = inchInput.value;
+
+                if (isLastInputMode) {
+                    const match = inchInput.value.match(/([0-9.]+)$/);
+                    inchValueStringForCalc = match ? match[0] : '';
+                }
 
                 if (!selectedTableRadio || inchValueStringForCalc.trim() === '') {
                     resultsTitle.style.display = 'none';
@@ -661,18 +693,12 @@
             inchInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); calculateAndDisplayDistance(true); }});
             lastInputModeToggle.addEventListener('change', function() {
                 isLastInputMode = this.checked;
-                activeCalcString = "";
                 if (!isLastInputMode) { inchInput.value = ''; }
                 calculateAndDisplayDistance(false);
                 inchInput.focus();
             });
 
             inchInput.addEventListener('input', () => {
-                if (isLastInputMode) {
-                    const lastChar = inchInput.value.slice(-1);
-                    if (lastChar >= '0' && lastChar <= '9') { activeCalcString = lastChar; } 
-                    else { activeCalcString = ""; }
-                }
                 calculateAndDisplayDistance(false);
             });
             
